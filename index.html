@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Screaning Checklist – Mobile Form</title>
+  <style>
+    :root {
+      --bg:#0b0f14; --card:#111821; --muted:#2a394a; --text:#e7eef7; --soft:#c5d3e3; --accent:#60a5fa; --good:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
+    a{color:var(--accent)}
+    .container{max-width:900px;margin:0 auto;padding:20px}
+    header{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+    .brand{font-weight:700;font-size:20px;letter-spacing:.3px}
+    .title{font-size:26px;font-weight:800}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+    button,.btn{border:1px solid var(--muted);background:transparent;color:var(--text);padding:10px 12px;border-radius:14px;cursor:pointer;font-weight:600}
+    button:hover{border-color:var(--accent)}
+    .primary{background:var(--accent);color:#071423;border-color:transparent}
+    .pill{border-radius:999px}
+    .card{background:var(--card);border:1px solid var(--muted);border-radius:18px;padding:14px}
+    details.section{margin:10px 0;border-radius:18px}
+    details.section > summary{list-style:none;cursor:pointer;padding:14px 16px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.05));}
+    details.section[open] > summary{border-bottom:1px solid var(--muted);border-bottom-left-radius:0;border-bottom-right-radius:0}
+    .section-body{padding:12px}
+    .q{display:grid;grid-template-columns:1fr;gap:6px;padding:10px;border:1px solid rgba(255,255,255,.06);border-radius:14px;margin:8px 0;background:rgba(255,255,255,.02)}
+    .q-label{font-weight:650;font-size:15px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .chip{padding:8px 12px;border:1px solid var(--muted);border-radius:999px;cursor:pointer;user-select:none}
+    .chip[data-state="yes"]{border-color:var(--good);}
+    .chip[data-state="no"]{border-color:var(--bad)}
+    input[type="text"], input[type="number"], textarea, select{width:100%;padding:10px 12px;background:#0e141c;border:1px solid var(--muted);border-radius:12px;color:var(--text)}
+    textarea{min-height:70px;resize:vertical}
+    .hint{font-size:12px;color:var(--soft)}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .percent{display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:center}
+    input[type="range"]{width:100%}
+    .footer{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:8px}
+    .badge{background:rgba(255,255,255,.06);border:1px solid var(--muted);padding:6px 10px;border-radius:999px;font-size:12px}
+    .sticky-top{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(11,15,20,1), rgba(11,15,20,.85) 70%, rgba(11,15,20,0));padding-top:6px;padding-bottom:6px}
+    .divider{height:1px;background:var(--muted);opacity:.6;margin:8px 0}
+    .kv{display:grid;grid-template-columns:140px 1fr;gap:8px}
+    .sr-only{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px)}
+    @media (max-width:560px){.kv{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sticky-top">
+      <header>
+        <div class="brand">Screan</div>
+        <div class="title">Screaning Checklist</div>
+        <div class="toolbar">
+          <button id="saveJson" class="btn">Save as JSON</button>
+          <button id="exportCsv" class="btn">Export CSV</button>
+          <button id="print" class="btn">Print / Save PDF</button>
+          <button id="clear" class="btn">Clear</button>
+          <span class="badge" id="status">Draft saved locally</span>
+        </div>
+      </header>
+    </div>
+
+    <div class="card" id="intro">
+      <div class="kv">
+        <label for="screeningId"><strong>Screening #</strong></label>
+        <input id="screeningId" name="meta.screeningId" type="text" placeholder="#3349" />
+        <label for="date"><strong>Date</strong></label>
+        <input id="date" name="meta.date" type="date" />
+        <label for="inspector"><strong>Inspector</strong></label>
+        <input id="inspector" name="meta.inspector" type="text" placeholder="Name" />
+        <label for="location"><strong>Location</strong></label>
+        <input id="location" name="meta.location" type="text" placeholder="City, Site" />
+      </div>
+      <div class="divider"></div>
+      <div class="kv">
+        <label for="vehicle"><strong>Vehicle</strong></label>
+        <input id="vehicle" name="meta.vehicle" type="text" placeholder="Make / Model / Year" />
+        <label for="vin"><strong>VIN</strong></label>
+        <input id="vin" name="meta.vin" type="text" placeholder="VIN" />
+        <label for="reg"><strong>Registration</strong></label>
+        <input id="reg" name="meta.reg" type="text" placeholder="Plate / Registration" />
+        <label for="mileage"><strong>Mileage</strong></label>
+        <input id="mileage" name="meta.mileage" type="number" placeholder="km" />
+      </div>
+    </div>
+
+    <div id="formRoot"></div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="q">
+        <div class="q-label">Disclaimer</div>
+        <div class="hint">Please note that we never dismantle or strip vehicles during our inspections... (edit in JSON below if needed).</div>
+        <textarea id="disclaimer" name="meta.disclaimer" placeholder="Paste or edit your disclaimer here."></textarea>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <details class="section">
+        <summary><strong>Customize / Import Schema</strong><span class="hint"> (Advanced)</span></summary>
+        <div class="section-body">
+          <p class="hint">You can edit the JSON schema below to add/remove sections or questions, then click <em>Reload Schema</em>. Keep a backup before big edits.</p>
+          <textarea id="schemaEditor" style="min-height:220px"></textarea>
+          <div class="footer">
+            <button id="reloadSchema" class="primary">Reload Schema</button>
+            <button id="downloadSchema" class="btn">Download Schema</button>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <footer style="opacity:.7; padding:12px; font-size:12px; text-align:center">
+      Built for mobile & iPad. JSON‑driven, no backend required.
+    </footer>
+  </div>
+
+  <script>
+    // ====== DYNAMIC SCHEMA (EDIT ME) ======
+    // Types: yesno, text, textarea, percent, select, info
+    // Each question may include: { id, text, type, comments: true, options:[], showIf:{field,value} }
+    const FORM_SCHEMA = [
+      {
+        section: "Seller",
+        questions: [
+          {id:"seller.regcert", text:"Ask to see Certificate of Registration and check against license disk and VIN number. All in order?", type:"yesno", comments:true},
+          {id:"seller.servicebook", text:"Does the vehicle have a service record and book?", type:"yesno", comments:true},
+          {id:"seller.accidents", text:"Any accidents or major repairs?", type:"yesno", comments:true},
+          {id:"seller.accidents.note", text:"Accident/repair notes", type:"textarea"},
+          {id:"seller.owner", text:"Who owns the vehicle?", type:"text", comments:true},
+          {id:"seller.warranty", text:"Does the vehicle have any valid warranties or guarantees?", type:"yesno", comments:true},
+          {id:"seller.roadworthy", text:"Will it be sold with roadworthy and registration?", type:"yesno", comments:true}
+        ]
+      },
+      {
+        section: "Exterior",
+        questions: [
+          {id:"ext.panelsAligned", text:"Are the exterior panels aligned properly (in a straight line)?", type:"yesno", comments:true},
+          {id:"ext.doorsEase", text:"Do the doors open and close with ease?", type:"yesno", comments:true},
+          {id:"ext.rubber", text:"Are the rubber seals around the windows in good condition?", type:"yesno", comments:true},
+          {id:"ext.rust", text:"Any rusty spots or possible rust cover-ups?", type:"yesno", comments:true},
+          {id:"ext.paintMismatch", text:"Any discoloration or mismatched paint?", type:"yesno", comments:true},
+          {id:"ext.hitch", text:"Is there a hitch?", type:"yesno", comments:true},
+          {id:"ext.tyres.sameBrand", text:"Are all tyres same brand and size?", type:"yesno", comments:true},
+          {id:"ext.tyres.sameWear", text:"Do all tyres have the same level of wear and tear?", type:"yesno", comments:true},
+          {id:"ext.tyres.tread", text:"What is the rough % of tread on tyres?", type:"percent"},
+          {id:"ext.tyres.cracks", text:"Any cracks on tyres?", type:"yesno", comments:true},
+          {id:"ext.rims.damage", text:"Any rim damage?", type:"yesno", comments:true},
+          {id:"ext.mags.original", text:"Are the mags original?", type:"yesno", comments:true},
+          {id:"ext.mags.comments", text:"Mags comments", type:"textarea"},
+          {id:"ext.susp.level", text:"To check suspension, does the car sit level?", type:"yesno", comments:true},
+          {id:"ext.susp.bounce", text:"If you go to all four corners of the car, and press down on it, does it react the same?", type:"yesno", comments:true},
+          {id:"ext.body.mods", text:"Have modifications been done to the original vehicle body?", type:"yesno", comments:true},
+          {id:"ext.shocks.leaks", text:"Does there appear to be any leaks or issues with the shock absorbers?", type:"yesno", comments:true},
+          {id:"ext.damage", text:"Any signs of accident damage anywhere on the outside of the vehicle?", type:"yesno", comments:true},
+          {id:"ext.under.fluidLeaks", text:"Under the vehicle, does there appear to be any fluid leaks?", type:"yesno", comments:true},
+          {id:"ext.under.marks", text:"Are there any unusual marks on the bottom of the car?", type:"yesno", comments:true},
+          {id:"ext.under.loose", text:"Do any of the parts seem loose?", type:"yesno", comments:true},
+          {id:"ext.chrome.missing", text:"Are there any chrome trim parts missing?", type:"yesno", comments:true},
+          {id:"ext.exhaust.rusty", text:"Is any part of the exhaust rusty?", type:"yesno", comments:true},
+          {id:"ext.exhaust.smoke", text:"When car is running, is there more smoke coming from the exhaust than is reasonable?", type:"yesno", comments:true},
+          {id:"ext.exhaust.holes", text:"Any holes in the exhaust?", type:"yesno", comments:true},
+          {id:"ext.fuelcap", text:"Does the fuel cap lock and unlock?", type:"yesno", comments:true}
+        ]
+      },
+      {
+        section: "Engine",
+        questions: [
+          {id:"eng.waterInOil", text:"Any signs of water in the oil or dipstick?", type:"yesno", comments:true},
+          {id:"eng.leaks", text:"Any signs of leaks: Oil? Coolants? Fluids?", type:"yesno", comments:true},
+          {id:"eng.dirty", text:"Is engine physically dirty or oily?", type:"yesno", comments:true},
+          {id:"eng.oilClear", text:"Is petrol engine oil clear (not dirty)?", type:"yesno", comments:true},
+          {id:"eng.coldStart", text:"Does the car start well from a cold start?", type:"yesno", comments:true},
+          {id:"eng.smells", text:"When running the engine, are there any weird smells?", type:"yesno", comments:true},
+          {id:"eng.noises", text:"When the engine is running, are there any noises?", type:"yesno", comments:true},
+          {id:"eng.dashLights", text:"When running engine, do any of the dash lights come on?", type:"yesno", comments:true},
+          {id:"eng.missingParts", text:"Any missing parts?", type:"yesno", comments:true},
+          {id:"eng.oilLevelLow", text:"Is the oil level low?", type:"yesno", comments:true},
+          {id:"eng.hesitation", text:"Does the car hesitate when accelerated?", type:"yesno", comments:true}
+        ]
+      },
+      {
+        section: "Transmission",
+        questions: [
+          {id:"trans.type", text:"Transmission type", type:"select", options:["Automatic","Manual"], comments:false},
+          {id:"auto.header", text:"Automatic Transmission", type:"info", showIf:{field:"trans.type", value:"Automatic"}},
+          {id:"auto.func", text:"Does the transmission function normally?", type:"yesno", comments:true, showIf:{field:"trans.type", value:"Automatic"}},
+          {id:"auto.burntSmell", text:"Does the transmission fluid have a burnt smell?", type:"yesno", comments:true, showIf:{field:"trans.type", value:"Automatic"}},
+          {id:"auto.quickShift", text:"Does it shift into gear quickly?", type:"yesno", comments:true, showIf:{field:"trans.type", value:"Automatic"}},
+          {id:"auto.fluidDirty", text:"On dipstick, is the transmission fluid dirty or discolored?", type:"yesno", comments:true, showIf:{field:"trans.type", value:"Automatic"}},
+          {id:"auto.shudder", text:"Do you feel a shaking or shuddering when shifting?", type:"yesno", comments:true, showIf:{field:"trans.type", value:"Automatic"}},
+          {id:"auto.kickdown", text:"Does the kick-down function work?", type:"yesno", comments:true, showIf:{field:"trans.type", value:"Automatic"}}
+        ]
+      },
+      {
+        section: "Brakes / Suspension",
+        questions: [
+          {id:"br.fluidLeaks", text:"Any signs of leaks or is fluid low?", type:"yesno", comments:true},
+          {id:"br.pedalFloor", text:"Does the brake pedal go all the way to the floor?", type:"yesno", comments:true},
+          {id:"br.corrosion", text:"Are the brake lines or rotors corroded?", type:"yesno", comments:true},
+          {id:"br.grinding", text:"Is there a grinding noise when you press down on brakes?", type:"yesno", comments:true},
+          {id:"br.lights", text:"When driving, do the brake lights come on?", type:"yesno", comments:true},
+          {id:"br.pull", text:"Do the brakes pull to one side when pressed (try a couple different speeds)?", type:"yesno", comments:true},
+          {id:"br.stopsTimely", text:"When you push on brakes, does the car stop in a timely manner?", type:"yesno", comments:true},
+          {id:"br.handbrake", text:"Does the handbrake work?", type:"yesno", comments:true},
+          {id:"susp.pull", text:"Does the car pull to one side?", type:"yesno", comments:true},
+          {id:"susp.cvNoise", text:"Check universal joints by turning in a sharp circle to one side and then the other. Is there crunching or creaking noise?", type:"yesno", comments:true},
+          {id:"susp.cvComment", text:"CV/universal joint comments", type:"textarea"}
+        ]
+      },
+      {
+        section: "Interior",
+        questions: [
+          {id:"int.flood", text:"Any evidence of flood damage? (Check trunk as well.)", type:"yesno", comments:true},
+          {id:"int.radio", text:"Does the radio work?", type:"yesno", comments:true},
+          {id:"int.odo", text:"Does the odometer bounce or show any evidence of being tampered with?", type:"yesno", comments:true},
+          {id:"int.hvac", text:"Does the air conditioner/​heater and rear defogger work?", type:"yesno", comments:true},
+          {id:"int.power", text:"Do the power locks, mirrors, windows, etc. work?", type:"yesno", comments:true},
+          {id:"int.lights", text:"Do all the car lights (brake, park, front lights etc) work when they should, including brights?", type:"yesno", comments:true},
+          {id:"int.warn", text:"Do any of the warning lights come on when driving or braking?", type:"yesno", comments:true},
+          {id:"int.intLights", text:"Do all the interior lights work?", type:"yesno", comments:true},
+          {id:"int.alarm", text:"Is there is an alarm system on the car?", type:"yesno", comments:true},
+          {id:"int.adjust", text:"Can you adjust the seats, seatbelts and mirrors with ease?", type:"yesno", comments:true},
+          {id:"int.manual", text:"Is the owner's manual in the car?", type:"yesno", comments:true},
+          {id:"int.central", text:"Does the central locking work?", type:"yesno", comments:true},
+          {id:"int.spareKey", text:"Is there a spare key?", type:"yesno", comments:true}
+        ]
+      },
+      {
+        section: "4-Wheel drive",
+        questions: [
+          {id:"awd.has4wd", text:"4-Wheel drive", type:"select", options:["No","Yes"], comments:false}
+        ]
+      },
+      {
+        section: "Screaner final report",
+        questions: [
+          {id:"final.summary", text:"Final assessment", type:"textarea"},
+          {id:"final.additional", text:"Additional comments", type:"textarea"}
+        ]
+      }
+    ];
+
+    // ====== RENDERER ======
+    const el = (tag, attrs={}, ...children) => {
+      const node = document.createElement(tag);
+      for (const [k,v] of Object.entries(attrs||{})){
+        if(k==='class') node.className=v; else if(k==='html') node.innerHTML=v; else if(k.startsWith('on') && typeof v==='function') node.addEventListener(k.slice(2), v); else if(v!==undefined) node.setAttribute(k, v);
+      }
+      for (const c of children){ if(c==null) continue; if(typeof c==='string') node.appendChild(document.createTextNode(c)); else node.appendChild(c); }
+      return node;
+    }
+
+    const state = { answers: {}, meta: {} };
+
+    function setValue(id, value){
+      state.answers[id] = value;
+      persist();
+      refreshVisibility();
+    }
+
+    function getValue(id){ return state.answers[id]; }
+
+    function yesNoControl(id){
+      const wrap = el('div', {class:'row'});
+      const yes = el('div', {class:'chip', role:'radio', tabindex:'0','aria-checked':'false'}, 'Yes');
+      const no  = el('div', {class:'chip', role:'radio', tabindex:'0','aria-checked':'false'}, 'No');
+      function sync(){
+        const v = getValue(id);
+        yes.dataset.state = v==='Yes'? 'yes': '';
+        no.dataset.state  = v==='No'? 'no': '';
+        yes.setAttribute('aria-checked', v==='Yes');
+        no.setAttribute('aria-checked', v==='No');
+      }
+      yes.onclick = ()=>{ setValue(id,'Yes'); sync(); };
+      no.onclick  = ()=>{ setValue(id,'No'); sync(); };
+      yes.onkeydown = (e)=>{ if(e.key==='Enter' || e.key===' '){ yes.click(); }};
+      no.onkeydown  = (e)=>{ if(e.key==='Enter' || e.key===' '){ no.click(); }};
+      sync();
+      wrap.append(yes,no);
+      return {root:wrap, sync};
+    }
+
+    function percentControl(id){
+      const wrap = el('div',{class:'percent'});
+      const num = el('input',{type:'number', min:'0', max:'100', step:'1', value:getValue(id)||'', placeholder:'%'});
+      const rng = el('input',{type:'range', min:'0', max:'100', step:'1', value:getValue(id)||'0'});
+      function syncBoth(src){
+        if(src!==num) num.value = rng.value;
+        if(src!==rng) rng.value = num.value || 0;
+        setValue(id, num.value);
+      }
+      num.oninput = ()=> syncBoth(num);
+      rng.oninput = ()=> syncBoth(rng);
+      wrap.append(num,rng);
+      return wrap;
+    }
+
+    function selectControl(id, options){
+      const sel = el('select');
+      sel.append(el('option',{value:''}, 'Select...'));
+      options.forEach(opt => sel.append(el('option',{value:opt}, opt)));
+      sel.value = getValue(id)||'';
+      sel.onchange = ()=> setValue(id, sel.value);
+      return sel;
+    }
+
+    function commentsBox(id){
+      const t = el('textarea',{placeholder:'Comments', id: id+".comments"});
+      t.value = getValue(id+".comments")||'';
+      t.oninput = ()=> setValue(id+".comments", t.value);
+      return t;
+    }
+
+    function infoNote(text){
+      return el('div',{class:'hint', html:text});
+    }
+
+    function renderQuestion(q){
+      const wrapper = el('div',{class:'q', id:'q-'+q.id});
+      if(q.type!=="info") wrapper.append(el('div',{class:'q-label'}, q.text));
+
+      let control = null;
+      switch(q.type){
+        case 'yesno':{
+          const {root, sync} = yesNoControl(q.id);
+          control = root; wrapper.append(control);
+          // attach a sync method for conditional re-eval
+          wrapper._sync = sync; break;
+        }
+        case 'text':{
+          const t = el('input',{type:'text', value:getValue(q.id)||'', placeholder:'Enter text'});
+          t.oninput = ()=> setValue(q.id, t.value);
+          control = t; wrapper.append(t); break;
+        }
+        case 'textarea':{
+          const t = el('textarea',{placeholder:'Type here'});
+          t.value = getValue(q.id)||'';
+          t.oninput = ()=> setValue(q.id, t.value);
+          control = t; wrapper.append(t); break;
+        }
+        case 'percent':{
+          control = percentControl(q.id); wrapper.append(control); break;
+        }
+        case 'select':{
+          control = selectControl(q.id, q.options||[]); wrapper.append(control); break;
+        }
+        case 'info':{
+          control = infoNote(q.text); wrapper.append(control); break;
+        }
+        default: control = infoNote('Unknown type: '+q.type); wrapper.append(control);
+      }
+
+      if(q.comments){ wrapper.append(commentsBox(q.id)); }
+      return wrapper;
+    }
+
+    function render(){
+      const root = document.getElementById('formRoot');
+      root.innerHTML = '';
+      FORM_SCHEMA.forEach((section, idx)=>{
+        const details = el('details',{class:'section', open: idx<2});
+        details.append(el('summary',{}, el('span',{}, section.section), el('span',{class:'hint'}, 'tap to expand')));
+        const body = el('div',{class:'section-body'});
+        section.questions.forEach(q=> body.append(renderQuestion(q)) );
+        details.append(body);
+        root.append(details);
+      });
+      refreshVisibility();
+    }
+
+    function refreshVisibility(){
+      // show/hide conditional questions
+      FORM_SCHEMA.forEach(section=>{
+        section.questions.forEach(q=>{
+          const node = document.getElementById('q-'+q.id);
+          if(!node) return;
+          if(q.showIf){
+            const cur = state.answers[q.showIf.field];
+            const show = cur===q.showIf.value;
+            node.style.display = show? 'grid' : 'none';
+          } else {
+            node.style.display = 'grid';
+          }
+          // resync yes/no UI
+          node._sync && node._sync();
+        })
+      })
+    }
+
+    // ====== STORAGE / EXPORT ======
+    const DRAFT_KEY = 'screan_draft_v1';
+
+    function persist(){
+      const meta = collectMeta();
+      const data = { meta, answers: state.answers };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+      document.getElementById('status').textContent = 'Draft saved';
+    }
+
+    function loadDraft(){
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if(!raw) return;
+      try{
+        const data = JSON.parse(raw);
+        Object.assign(state.answers, data.answers||{});
+        applyMeta(data.meta||{});
+      }catch(e){console.warn('Draft parse error', e)}
+    }
+
+    function collectMeta(){
+      return {
+        screeningId: document.getElementById('screeningId').value,
+        date: document.getElementById('date').value,
+        inspector: document.getElementById('inspector').value,
+        location: document.getElementById('location').value,
+        vehicle: document.getElementById('vehicle').value,
+        vin: document.getElementById('vin').value,
+        reg: document.getElementById('reg').value,
+        mileage: document.getElementById('mileage').value,
+        disclaimer: document.getElementById('disclaimer').value
+      }
+    }
+
+    function applyMeta(m){
+      if(!m) return;
+      const ids = ['screeningId','date','inspector','location','vehicle','vin','reg','mileage','disclaimer'];
+      ids.forEach(id=>{ if(m[id]!==undefined) document.getElementById(id).value = m[id]; })
+    }
+
+    function download(filename, text){
+      const a = document.createElement('a');
+      a.setAttribute('href','data:text/plain;charset=utf-8,'+encodeURIComponent(text));
+      a.setAttribute('download', filename);
+      a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function toCSV(obj){
+      // Flatten single-level object to CSV (key,value)
+      const rows = [['Field','Value']];
+      const meta = collectMeta();
+      Object.entries(meta).forEach(([k,v])=> rows.push([k,String(v||'')]));
+      Object.entries(state.answers).forEach(([k,v])=> rows.push([k,String(v||'')]));
+      return rows.map(r=> r.map(x=> '"'+String(x).replaceAll('"','""')+'"').join(',')).join('\n');
+    }
+
+    // ====== SCHEMA EDITOR ======
+    function loadSchemaEditor(){
+      document.getElementById('schemaEditor').value = JSON.stringify(FORM_SCHEMA, null, 2);
+    }
+
+    function applySchemaFromEditor(){
+      try{
+        const next = JSON.parse(document.getElementById('schemaEditor').value);
+        if(!Array.isArray(next)) throw new Error('Schema must be an array');
+        // Replace contents
+        while(FORM_SCHEMA.length) FORM_SCHEMA.pop();
+        next.forEach(s=> FORM_SCHEMA.push(s));
+        render(); persist();
+      }catch(e){
+        alert('Schema error: '+e.message);
+      }
+    }
+
+    function downloadCurrentSchema(){
+      download('screan_schema.json', JSON.stringify(FORM_SCHEMA, null, 2));
+    }
+
+    // ====== INIT & EVENTS ======
+    document.getElementById('saveJson').onclick = ()=>{
+      const payload = { meta: collectMeta(), answers: state.answers, exportedAt: new Date().toISOString() };
+      download(`screan_${payload.meta.screeningId||'report'}.json`, JSON.stringify(payload, null, 2));
+    };
+    document.getElementById('exportCsv').onclick = ()=> download('screan_report.csv', toCSV());
+    document.getElementById('print').onclick = ()=> window.print();
+    document.getElementById('clear').onclick = ()=>{ if(confirm('Clear all responses?')){ localStorage.removeItem(DRAFT_KEY); location.reload(); }}
+
+    document.getElementById('reloadSchema').onclick = applySchemaFromEditor;
+    document.getElementById('downloadSchema').onclick = downloadCurrentSchema;
+
+    Array.from(document.querySelectorAll('#intro input, #intro textarea')).forEach(inp=> inp.addEventListener('input', persist));
+
+    loadDraft();
+    render();
+    loadSchemaEditor();
+
+    // Prefill helpful default text for disclaimer
+    if(!document.getElementById('disclaimer').value){
+      document.getElementById('disclaimer').value = `Please note that we never dismantle or strip vehicles during our inspections. The Screan vehicle inspection only includes a visual check of the vehicle components and elements specifically listed in the inspection report.\n\nWhile the Screan inspection is thorough, please note that there are some things that we do not check, including: Alarm systems; Radios; Sound systems or speakers; The source of any suspected leaks; Any accumulation of sludge on oil pump strainers; Cylinder compression; Oil consumption; Fuel consumption.\n\nIn our Car and Classic Car inspections, the test drive is an important part of our assessment. However, test drives are only carried out within the immediate confines of the vehicle’s location, and are subject to limitations based on the driving area available.\n\nWhile our Screaners go out of their way to look for problems and issues, Screan cannot be held responsible for any hidden or concealed faults or defects not detected during our inspection. Please also note that the Screan inspection report is only valid for the specified vehicle at the time of the inspection.\n\nFor some of our Screaners, English is a second language, so please excuse the odd typo.`;
+    }
+  </script>
+</body>
+</html>
